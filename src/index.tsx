@@ -61,7 +61,7 @@ export default definePlugin(() => {
   );
 
   return {
-    name: "MoonDeck",
+    name: "Vibedeck",
     icon: <MoonDeckMain />,
     content: <QuickSettingsView />,
     onDismount() {

@@ -25,11 +25,60 @@ class CommandLineOptions(TypedDict):
     enable_v_sync: Optional[bool]
     enable_frame_pacing: Optional[bool]
     video_codec: Optional[str]
+    yuv444: Optional[bool]
+    enable_vrr: Optional[bool]
+    smooth_vrr_frame_timing: Optional[bool]
+    absorb_vrr_microstutter: Optional[bool]
+
+
+def stream_arguments(options: CommandLineOptions) -> list[str]:
+    """Produce argv without a shell, preserving explicit false overrides."""
+    args: list[str] = []
+    if options.get("audio") is not None:
+        args += ["--audio-config", options["audio"]]
+    resolution = options.get("resolution")
+    if resolution:
+        size = resolution["size"]
+        if size:
+            args += ["--resolution", f"{size['width']}x{size['height']}"]
+        for key in ("fps", "bitrate"):
+            if resolution[key]:
+                args += [f"--{key}", str(resolution[key])]
+        if resolution["hdr"] is not None:
+            args.append("--hdr" if resolution["hdr"] else "--no-hdr")
+    toggles = {
+        "quit_after": "quit-after", "show_performance_stats": "performance-overlay",
+        "enable_v_sync": "vsync", "enable_frame_pacing": "frame-pacing",
+        "yuv444": "yuv444", "enable_vrr": "vrr",
+        "smooth_vrr_frame_timing": "vrr-smooth-frame-timing",
+        "absorb_vrr_microstutter": "vrr-absorb-microstutter",
+    }
+    for key, flag in toggles.items():
+        if options.get(key) is not None:
+            args.append(f"--{flag}" if options[key] else f"--no-{flag}")
+    if options.get("video_codec") is not None:
+        args += ["--video-codec", options["video_codec"]]
+    return args
+
+
+def missing_client_features(help_text: str, options: CommandLineOptions) -> list[str]:
+    import re
+    # Match complete flags; --vrr-smooth-frame-timing must not imply --vrr.
+    supported = set(re.findall(r"--[a-z0-9-]+", help_text.lower()))
+    custom = ("vrr", "vrr-smooth-frame-timing", "vrr-absorb-microstutter", "yuv444")
+    required = [arg for arg in stream_arguments(options)
+                if arg.startswith("--") and arg.removeprefix("--").removeprefix("no-") in custom]
+    missing = [arg for arg in required if arg not in supported]
+    if (options.get("video_codec") or "").lower() == "pyrowave" and "pyrowave" not in help_text.lower():
+        missing.append("PyroWave codec")
+    return missing
 
 
 class MoonlightProxy(contextlib.AbstractAsyncContextManager):
 
     flatpak_moonlight = "com.moonlight_stream.Moonlight"
+    # Nonary's bundle uses master; Flathub's stock build uses stable.
+    flatpak_branch = "master"
 
     def __init__(self, exec_path: Optional[str]) -> None:
         # Lazy import to improve CLI performance
@@ -82,51 +131,40 @@ class MoonlightProxy(contextlib.AbstractAsyncContextManager):
         exec, args = self.__get_exec_with_args()
 
         if cmd_options:
-            if (audio := cmd_options["audio"]) is not None:
-                args += ["--audio-config", audio]
-
-            if (resolution := cmd_options["resolution"]) is not None:
-                if resolution["size"]:
-                    args += ["--resolution", f"{resolution['size']['width']}x{resolution['size']['height']}"]
-                if resolution["fps"]:
-                    args += ["--fps", f"{resolution['fps']}"]
-                if resolution["hdr"] is not None:
-                    args += ["--hdr" if resolution["hdr"] else "--no-hdr"]
-                if resolution["bitrate"]:
-                    args += ["--bitrate", f"{resolution['bitrate']}"]
-
-            if (quit_after := cmd_options["quit_after"]) is not None:
-                if quit_after:
-                    args += ["--quit-after"]
-                else:
-                    args += ["--no-quit-after"]
-            
-            if (show_performance_stats := cmd_options["show_performance_stats"]) is not None:
-                if show_performance_stats:
-                    args += ["--performance-overlay"]
-                else:
-                    args += ["--no-performance-overlay"]
-
-            if (enable_v_sync := cmd_options["enable_v_sync"]) is not None:
-                if enable_v_sync:
-                    args += ["--vsync"]
-                else:
-                    args += ["--no-vsync"]
-
-            if (enable_frame_pacing := cmd_options["enable_frame_pacing"]) is not None:
-                if enable_frame_pacing:
-                    args += ["--frame-pacing"]
-                else:
-                    args += ["--no-frame-pacing"]
-            
-            if (video_codec := cmd_options["video_codec"]) is not None:
-                args += ["--video-codec", video_codec]
+            args += stream_arguments(cmd_options)
 
         args += ["stream", hostname, host_app]
 
         logger.info(f"Executing: {exec} {' '.join(args)}")
         self.process = await utils.create_subprocess_exec(exec, *args)
         self.__reaper = utils.ProcessReaper(self.process.pid)
+
+    async def validate_options(self, options: CommandLineOptions):
+        import asyncio
+        from . import utils
+        from .runnerresult import RunnerError, Result
+
+        if not any(options.get(key) is not None for key in (
+                "enable_vrr", "smooth_vrr_frame_timing", "absorb_vrr_microstutter", "yuv444")) and (options.get("video_codec") or "").lower() != "pyrowave":
+            return
+        executable, args = self.__get_exec_with_args()
+        process = await utils.create_subprocess_exec(executable, *args, "stream", "--help")
+        try:
+            output, _ = await asyncio.wait_for(process.communicate(), timeout=8)
+            missing = missing_client_features(output.decode(errors="replace"), options)
+            if process.returncode != 0 or missing:
+                logger.error(f"Moonlight capability check failed; missing: {missing}")
+                raise RunnerError(Result.UnsupportedMoonlightOptions)
+        except asyncio.TimeoutError as error:
+            logger.error("Moonlight capability check timed out; verify the selected Nonary executable")
+            raise RunnerError(Result.UnsupportedMoonlightOptions) from error
+        finally:
+            if process.returncode is None:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
+                await process.wait()
 
     async def terminate(self):
         # Lazy import to improve CLI performance
@@ -191,10 +229,11 @@ class MoonlightProxy(contextlib.AbstractAsyncContextManager):
                 logger.error("flatpak is not installed!")
                 return False
 
-            list_proc = await utils.create_subprocess_exec(flatpak_exec, "list", stderr_to_devnull=True)
-            output, _ = await list_proc.communicate()
-            if output:
-                return output.decode().find(MoonlightProxy.flatpak_moonlight) != -1
+            info = await utils.create_subprocess_exec(
+                flatpak_exec, "info", f"{self.flatpak_moonlight}//{self.flatpak_branch}",
+                stderr_to_devnull=True)
+            await info.communicate()
+            return info.returncode == 0
         else:
             if os.path.isfile(self.exec_path):
                 if os.access(self.exec_path, os.X_OK):
@@ -214,7 +253,7 @@ class MoonlightProxy(contextlib.AbstractAsyncContextManager):
     def __get_exec_with_args(self):
         if self.exec_path is None:
             exec = self.__get_flatpak_exec()
-            args = ["run", self.flatpak_moonlight]
+            args = ["run", f"--branch={self.flatpak_branch}", self.flatpak_moonlight]
 
             if exec is None:
                 raise Exception("Moonlight is not installed!")

@@ -5,7 +5,7 @@ import { SettingsMain } from "../icons";
 export const TitleView: FC = () => {
   const onSettingsClick = (): void => {
     Navigation.CloseSideMenus();
-    Navigation.Navigate("/moondeck");
+    Navigation.Navigate("/vibedeck");
   };
 
   return (
@@ -20,7 +20,7 @@ export const TitleView: FC = () => {
       }}
       className={staticClasses.Title}
     >
-      <div>MoonDeck</div>
+      <div>Vibedeck</div>
       <DialogButton
         style={{ height: "28px", width: "40px", minWidth: 0, padding: "10px 12px" }}
         onClick={onSettingsClick}

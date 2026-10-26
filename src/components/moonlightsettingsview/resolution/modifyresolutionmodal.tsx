@@ -1,133 +1,81 @@
+import { AnyTextInput, ListDropdown, NumericTextInput } from "../../shared";
 import { DialogButton, Field, ModalRoot } from "@decky/ui";
-import { Dimension, HostResolution, minBitrate, minFps, stringifyDimension } from "../../../lib";
-import { NumericTextInput, OptionalBooleanDropdown } from "../../shared";
-import { useEffect, useState } from "react";
+import { Dimension, HostResolution, StreamingProfile, emptyStreamingProfile, emptyTransportProfiles } from "../../../lib";
 import { IndexedListModal } from "../../shared/indexedlist";
+import { StreamingProfileFields } from "../streamingprofilefields";
+import { useState } from "react";
 
-function isValidIndex(index: number | null, listSize: number): boolean {
-  return index !== null && index >= 0 && index < listSize;
-}
+const profileLayers = [
+  { id: "display", label: "Display defaults" },
+  { id: "ethernet", label: "Ethernet overrides" },
+  { id: "wifi", label: "Wi-Fi overrides" }
+] as const;
+
+type Layer = typeof profileLayers[number]["id"];
 
 export const ModifyResolutionModal: IndexedListModal<HostResolution["dimensions"][number]> = ({ closeModal, currentList, currentIndex, updateList }) => {
-  const initialValue = isValidIndex(currentIndex, currentList.length) ? currentList[currentIndex!] : null;
+  const validIndex = currentIndex !== null && currentIndex >= 0 && currentIndex < currentList.length;
+  const initialValue = validIndex ? currentList[currentIndex] : null;
   const [width, setWidth] = useState<number | null>(initialValue?.width ?? null);
   const [height, setHeight] = useState<number | null>(initialValue?.height ?? null);
-  const [bitrate, setBitrate] = useState<number | null>(initialValue?.bitrate ?? null);
-  const [fps, setFps] = useState<number | null>(initialValue?.fps ?? null);
-  const [hdr, setHdr] = useState<boolean | null>(initialValue?.hdr ?? null);
-  const [widthIsValid, setWidthIsValid] = useState<boolean>(false);
-  const [heightIsValid, setHeightIsValid] = useState<boolean>(false);
-  const [bitrateIsValid, setBitrateIsValid] = useState<boolean>(false);
-  const [fpsIsValid, setFpsIsValid] = useState<boolean>(false);
-  const [resolution, setResolution] = useState<HostResolution["dimensions"][number] | null>(null);
-
-  useEffect(() => {
-    if (typeof width === "number" && typeof height === "number" && (typeof bitrate === "number" || bitrate === null) && (typeof fps === "number" || fps === null) && (typeof hdr === "boolean" || hdr === null)) {
-      setResolution({ width, height, bitrate, fps, hdr, linkedDisplays: initialValue?.linkedDisplays ?? [] });
-    } else {
-      setResolution(null);
-    }
-  }, [width, height, bitrate, fps, hdr]);
+  const [label, setLabel] = useState(initialValue?.label ?? "");
+  const [profile, setProfile] = useState<StreamingProfile>({ ...emptyStreamingProfile(), ...initialValue });
+  const [networks, setNetworks] = useState(initialValue?.networkOverrides ?? emptyTransportProfiles());
+  const [layer, setLayer] = useState<Layer>("display");
+  const [widthValid, setWidthValid] = useState(false);
+  const [heightValid, setHeightValid] = useState(false);
+  const [profileValidity, setProfileValidity] = useState({ display: true, ethernet: true, wifi: true });
 
   const handleClick = (): void => {
-    if (resolution !== null) {
-      const compareWithListItems = (target: Dimension) => (item: Dimension): boolean => item.height === target.height && item.width === target.width && item.bitrate === target.bitrate && item.fps === target.fps && item.hdr === target.hdr;
-      const newList = [...currentList];
-
-      if (initialValue != null) {
-        const index = newList.findIndex(compareWithListItems(initialValue));
-        newList.splice(index, 1);
-      }
-
-      const alreadyInList = newList.findIndex(compareWithListItems(resolution)) !== -1;
-      if (!alreadyInList) {
-        newList.push(resolution);
-        newList.sort((a, b) => {
-          const nameA = stringifyDimension(a);
-          const nameB = stringifyDimension(b);
-          if (nameA < nameB) {
-            return -1;
-          }
-          if (nameA > nameB) {
-            return 1;
-          }
-          return 0;
-        });
-      }
-
-      const index = newList.findIndex(compareWithListItems(resolution));
-      updateList(newList, index);
+    if (width === null || height === null) {
+      return;
     }
-    setResolution(null);
+    const dimension: Dimension = {
+      ...profile, width, height, label: label.trim(),
+      linkedDisplays: [...(initialValue?.linkedDisplays ?? [])],
+      networkOverrides: networks
+    };
+    const list = [...currentList];
+    // Profiles with identical resolutions may belong to different screens.
+    // Replace by index, retaining display links and the rest of the list.
+    const index = validIndex ? currentIndex : list.length;
+    list[index] = dimension;
+    updateList(list, index);
     closeModal();
   };
 
   return (
     <ModalRoot closeModal={closeModal}>
-      <div style={{ fontWeight: "bolder", marginBottom: "1em" }}>
-        Enter custom resolution
+      <div style={{ fontWeight: "bolder", marginBottom: "1em" }}>Display streaming profile</div>
+      <div style={{ maxHeight: "65vh", overflowY: "auto", paddingRight: "12px" }}>
+        <Field label="Profile name (optional)" childrenContainerWidth="fixed">
+          <AnyTextInput value={label} setValue={setLabel} />
+        </Field>
+        <Field label="Width" childrenContainerWidth="fixed">
+          <NumericTextInput min={1} max={16384} integer={true} value={width} setValue={setWidth} setIsValid={setWidthValid} />
+        </Field>
+        <Field label="Height" childrenContainerWidth="fixed">
+          <NumericTextInput min={1} max={16384} integer={true} value={height} setValue={setHeight} setIsValid={setHeightValid} />
+        </Field>
+        <Field label="Edit settings for" description="Inherit keeps the preceding host/display value. Network overrides apply on the next stream; link this profile to a screen after saving." childrenContainerWidth="fixed">
+          <ListDropdown optionList={profileLayers} label="Display defaults" value={layer} setValue={setLayer} />
+        </Field>
+        <StreamingProfileFields
+          key={layer}
+          value={layer === "display" ? profile : networks[layer]}
+          setValue={(value) => {
+            if (layer === "display") {
+              setProfile(value);
+            } else {
+              setNetworks({ ...networks, [layer]: value });
+            }
+          }}
+          onValidityChange={(valid) => setProfileValidity((previous) => ({ ...previous, [layer]: valid }))}
+        />
       </div>
-      <Field
-        label="Width"
-        childrenContainerWidth="fixed"
-      >
-        <NumericTextInput
-          value={width}
-          setValue={setWidth}
-          setIsValid={setWidthIsValid}
-        />
-      </Field>
-      <Field
-        label="Height"
-        childrenContainerWidth="fixed"
-      >
-        <NumericTextInput
-          value={height}
-          setValue={setHeight}
-          setIsValid={setHeightIsValid}
-        />
-      </Field>
-      <Field
-        label="Bitrate in kbps (optional)"
-        childrenContainerWidth="fixed"
-      >
-        <NumericTextInput
-          min={minBitrate}
-          optional={true}
-          value={bitrate}
-          setValue={setBitrate}
-          setIsValid={setBitrateIsValid}
-        />
-      </Field>
-      <Field
-        label="FPS (optional)"
-        childrenContainerWidth="fixed"
-      >
-        <NumericTextInput
-          min={minFps}
-          optional={true}
-          value={fps}
-          setValue={setFps}
-          setIsValid={setFpsIsValid}
-        />
-      </Field>
-      <Field
-        label="HDR"
-        childrenContainerWidth="fixed"
-      >
-        <OptionalBooleanDropdown
-          value={hdr}
-          optValueLabel="Don't override"
-          setValue={setHdr}
-        />
-      </Field>
-      <Field
-        childrenLayout="below"
-        childrenContainerWidth="max"
-        bottomSeparator="none"
-      >
-        <DialogButton disabled={!widthIsValid || !heightIsValid || !bitrateIsValid || !fpsIsValid || resolution === null} onClick={handleClick}>
-          Save resolution
+      <Field childrenLayout="below" childrenContainerWidth="max" bottomSeparator="none">
+        <DialogButton disabled={!widthValid || !heightValid || !Object.values(profileValidity).every(Boolean)} onClick={handleClick}>
+          Save display profile
         </DialogButton>
       </Field>
     </ModalRoot>

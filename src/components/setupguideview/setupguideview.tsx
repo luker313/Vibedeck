@@ -18,13 +18,13 @@ export const SetupGuideView: FC = () => {
       <DialogControlsSection>
         <DialogControlsSectionHeader>How to get this plugin working?</DialogControlsSectionHeader>
         <Field
-          label="Step 1 - Configure Moonlight client to work with GameStream service (e.g. Sunshine)"
-          description="Download the flatpak version or AppImage (via Desktop) of the Moonlight client and make sure it is configured."
+          label="Step 1 - Pair Nonary’s VRR Moonlight with Vibepollo"
+          description="Install Nonary’s VRR Moonlight Flatpak (master branch) or select its AppImage in Moonlight Settings. Pair and test a stream with Vibepollo first."
           focusable={true}
         />
         <Field
           label="Step 2 - Download and setup Buddy on host PC"
-          description="Requires Buddy v1.9.0 or above."
+          description="Keep the standard MoonDeck Buddy (API 9; v1.9.0 or above) on the host. No Buddy fork is required."
         >
           <DialogButton onClick={() => { Navigation.NavigateToExternalWeb(moondeckBuddyLink); }}>Click me!</DialogButton>
         </Field>

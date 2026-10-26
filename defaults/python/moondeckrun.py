@@ -89,6 +89,9 @@ async def run_with_suspend_resume(settings: MoonDeckAppRunnerSettings | Moonligh
                     resume_requested.clear()
                     await resume_requested.wait()
                     logger.info("MoonDeck runner is being resumed!")
+                    # A dock/network change while asleep must not reuse the
+                    # previous session's wired codec or bitrate overrides.
+                    settings = await parse_settings()
                     change_moondeck_runner_suspended_state(False)
 
 

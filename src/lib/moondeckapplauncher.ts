@@ -1,4 +1,4 @@
-import { AppStartResult, AppType, ControllerConfigOption, EnvVars, checkExecPathMatch, getAppDetails, getAudioDevices, getCurrentDisplayModeString, getCurrentUserSteamId, getDisplayIdentifiers, getMoonDeckRunPath, getSystemNetworkStore, launchApp, registerForGameLaunchIntercept, registerForGameLifetime, registerForSuspendNotifications, setAppHiddenState, setAppLaunchOptions, setAppResolutionOverride, setOverrideResolutionForInternalDisplay, setShortcutName } from "./steamutils";
+import { AppStartResult, AppType, ControllerConfigOption, EnvVars, checkExecPathMatch, getAppDetails, getAudioDevices, getCurrentDisplayModeString, getCurrentUserSteamId, getDisplayIdentifiers, getMoonDeckRunPath, getSystemNetworkStore, launchApp, registerForGameLaunchIntercept, registerForGameLifetime, registerForSuspendNotifications, setAppHiddenState, setAppLaunchOptions, setAppResolutionOverride, setOverrideResolutionForInternalDisplay, setShortcutName, waitForAppDetails } from "./steamutils";
 import { ControllerConfigValues, Dimension, HostResolution, HostSettings, SettingsManager } from "./settingsmanager";
 import { Subscription, pairwise } from "rxjs";
 import { getEnvKeyValueString, makeEnvKeyValue } from "./envutils";
@@ -170,8 +170,20 @@ export class MoonDeckAppLauncher {
     }
 
     if (!checkExecPathMatch(execPath, details.strShortcutExe)) {
-      logger.error(`Exec path does not match the expected one for ${appId}! ${details.strShortcutExe} vs ${execPath}`);
-      return null;
+      // An imported MoonDeck shortcut still points into the old plugin folder.
+      // Rebind only our known runner; preserve the shortcut ID and controls.
+      const previousPath = details.strShortcutExe.replace(/^"|"$/g, "");
+      if (!previousPath.endsWith("/vibedeckrun.sh")) {
+        logger.error(`Unexpected shortcut executable for ${appId}: ${previousPath}`);
+        return null;
+      }
+      SteamClient.Apps.SetShortcutExe(details.unAppID, execPath);
+      const rebound = await waitForAppDetails(details.unAppID, (value) => value !== null && checkExecPathMatch(execPath, value.strShortcutExe));
+      if (!rebound.matchesPredicate || rebound.details === null) {
+        logger.error(`Failed to rebind imported shortcut ${appId}`);
+        return null;
+      }
+      details = rebound.details;
     }
 
     return details;
@@ -404,6 +416,9 @@ export class MoonDeckAppLauncher {
       }
 
       updateControllerConfig(details.unAppID, settings.gameSession.controllerConfig);
+
+      // The runner reads the file: do not launch with a pending throttled edit.
+      await this.settingsManager.flush();
 
       let sessionOptions = this.moonDeckApp.value?.sessionOptions ?? null;
       if (sessionOptions === null) {

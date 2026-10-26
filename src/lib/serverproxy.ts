@@ -1,4 +1,4 @@
-import { HostSettings, SettingsManager, appLaunchDefault, appLaunchStabilityDefault, buddyRequestsDefault, initialConditionsDefault, servicePingDefault, steamLaunchDefault, steamReadinessDefault, streamEndDefault, streamReadinessDefault, userSwitch, wakeOnLanDefault } from "./settingsmanager";
+import { HostSettings, SettingsManager, appLaunchDefault, appLaunchStabilityDefault, buddyRequestsDefault, emptyTransportProfiles, initialConditionsDefault, servicePingDefault, steamLaunchDefault, steamReadinessDefault, streamEndDefault, streamReadinessDefault, userSwitch, wakeOnLanDefault } from "./settingsmanager";
 import { BehaviorSubject } from "rxjs";
 import { BuddyProxy } from "./buddyproxy";
 import { Mutex } from "async-mutex";
@@ -103,6 +103,11 @@ export class ServerProxy {
         enableVSync: currentSettings?.enableVSync ?? null,
         enableFramePacing: currentSettings?.enableFramePacing ?? null,
         videoCodec: currentSettings?.videoCodec ?? null,
+        yuv444: currentSettings?.yuv444 ?? null,
+        enableVrr: currentSettings?.enableVrr ?? null,
+        smoothVrrFrameTiming: currentSettings?.smoothVrrFrameTiming ?? null,
+        absorbVrrMicrostutter: currentSettings?.absorbVrrMicrostutter ?? null,
+        networkSettings: currentSettings?.networkSettings ?? { mode: "Auto", ...emptyTransportProfiles() },
         runnerTimeouts: {
           buddyRequests: currentSettings?.runnerTimeouts.buddyRequests ?? buddyRequestsDefault,
           servicePing: currentSettings?.runnerTimeouts.servicePing ?? servicePingDefault,

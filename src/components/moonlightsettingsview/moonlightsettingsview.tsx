@@ -5,6 +5,7 @@ import { FC } from "react";
 import { GeneralSection } from "./general/generalsection";
 import { HostOff } from "../icons";
 import { LabelWithIcon } from "../shared";
+import { NetworkProfileSection } from "./networkprofilesection";
 import { ResolutionSection } from "./resolution/resolutionsection";
 import { useCurrentHostSettings } from "../../hooks";
 
@@ -29,6 +30,7 @@ export const MoonlightSettingsView: FC = () => {
       <GeneralSection hostSettings={hostSettings} />
       <AudioSection hostSettings={hostSettings} />
       <ResolutionSection hostSettings={hostSettings} />
+      <NetworkProfileSection hostSettings={hostSettings} />
       <AppResolutionOverrideSection hostSettings={hostSettings} />
     </DialogBody>
   );

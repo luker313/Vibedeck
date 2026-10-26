@@ -5,6 +5,7 @@ interface CommonProps {
   disabled?: boolean;
   min?: number;
   max?: number;
+  integer?: boolean;
   value: number | null;
   setIsValid?: (value: boolean) => void;
 }
@@ -21,7 +22,7 @@ interface OptionalProps extends CommonProps {
 
 type Props = NonOptionalProps | OptionalProps;
 
-export const NumericTextInput: FC<Props> = ({ disabled, min, max, optional, value, setValue, setIsValid }) => {
+export const NumericTextInput: FC<Props> = ({ disabled, min, max, integer, optional, value, setValue, setIsValid }) => {
   return (
     <TextInput<number | null>
       disabled={disabled}
@@ -38,6 +39,9 @@ export const NumericTextInput: FC<Props> = ({ disabled, min, max, optional, valu
         }
 
         const isMinSet = typeof min === "number";
+        if (integer && !Number.isInteger(convertedValue)) {
+          return { success: false, error: "Input must be a whole number!" };
+        }
         const isMaxSet = typeof max === "number";
 
         if ((isMinSet && convertedValue < min) || (isMaxSet && convertedValue > max)) {

@@ -1,28 +1,31 @@
 {
-  "name": "moondeck",
-  "version": "1.13.0",
-  "description": "MoonDeck lets you play any of your Steam games via Moonlight without needing to add them to Sunshine first, providing a similar experience to GeForce GameStream or Steam Remote Play.",
+  "name": "vibedeck",
+  "version": "0.1.0",
+  "description": "Display-aware MoonDeck fork for Nonary's Vibepollo and VRR Moonlight.",
   "type": "module",
   "scripts": {
     "setup": "pnpm i && ([ -f ./cli/decky ] || pnpm run setup:cli) && (which docker >/dev/null || echo 'Docker not found, you will need it for backend development.')",
     "setup:cli": "mkdir -p cli && case \"$(uname -s)-$(uname -m)\" in 'Linux-x86_64') url=decky-linux-x86_64 ;; 'Darwin-x86_64') url=decky-macOS-x86_64 ;; 'Darwin-arm64') url=decky-macOS-aarch64 ;; *) echo \"Unsupported system: $(uname -s)-$(uname -m)\"; exit 1 ;; esac && curl -L \"https://github.com/SteamDeckHomebrew/cli/releases/latest/download/$url\" -o ./cli/decky && chmod +x ./cli/decky",
     "build": "rollup -c",
-    "build:plugin": "./cli/decky plugin build -s directory",
+    "build:plugin": "pnpm run build && pnpm run package",
     "build:deploy": "pnpm run build:plugin && pnpm run deploy",
     "deploy": "dotenv -- sh -c \"pnpm --silent run deploy:dotenv 'pnpm --silent run deploy:scp && pnpm --silent run deploy:rmdir && pnpm --silent run deploy:mkdir && pnpm --silent run deploy:chown && pnpm --silent run deploy:extract && pnpm --silent run deploy:restart'\"",
-    "deploy:dotenv": "set -e; echo \"🛠️  Setting up ENV\"; export PLUGIN_SAFE_NAME=$(echo \"$PLUGIN_NAME\" | tr ' ' '-'); PLUGIN_DIR=\"$DECK_DIR/homebrew/plugins/$PLUGIN_SAFE_NAME\" OUT_FILE=\"out/$PLUGIN_NAME.zip\" TMP_FILE=\"/tmp/$PLUGIN_NAME.zip\" SHARED_OPTS=\"$DECK_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=10 $DECK_KEY\" SCP_OPTS=\"-q -P $SHARED_OPTS\" SSH_OPTS=\"-C -p $SHARED_OPTS $DECK_USER@$DECK_IP\" SUDO=\"sudo -p '' -S\" sh -c \"$@\"",
-    "deploy:scp": "echo \"📤 Deploying '$OUT_FILE' to $DECK_USER@$DECK_IP:'$TMP_FILE'\" && scp $SCP_OPTS \"$OUT_FILE\" $DECK_USER@$DECK_IP:\"$TMP_FILE\"",
-    "deploy:rmdir": "echo \"🗑️  Cleaning up '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- rm -rf '$PLUGIN_DIR'\"",
-    "deploy:mkdir": "echo \"📁 Creating '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- mkdir -m 755 -p '$PLUGIN_DIR'\"",
-    "deploy:chown": "echo \"🔑 Changing ownership for '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO chown $DECK_USER:$DECK_USER '$PLUGIN_DIR'\"",
-    "deploy:extract": "echo \"📦 Extracting '$TMP_FILE' to '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- bsdtar -xzp -f '$TMP_FILE' -C '$PLUGIN_DIR' --strip-components=1 --fflags\"",
-    "deploy:restart": "echo \"♻️  Restarting Decky\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- systemctl restart plugin_loader\"",
+    "deploy:dotenv": "set -e; echo \"\ud83d\udee0\ufe0f  Setting up ENV\"; export PLUGIN_SAFE_NAME=$(echo \"$PLUGIN_NAME\" | tr ' ' '-'); PLUGIN_DIR=\"$DECK_DIR/homebrew/plugins/$PLUGIN_SAFE_NAME\" OUT_FILE=\"out/$PLUGIN_NAME.zip\" TMP_FILE=\"/tmp/$PLUGIN_NAME.zip\" SHARED_OPTS=\"$DECK_PORT -o StrictHostKeyChecking=no -o ConnectTimeout=10 $DECK_KEY\" SCP_OPTS=\"-q -P $SHARED_OPTS\" SSH_OPTS=\"-C -p $SHARED_OPTS $DECK_USER@$DECK_IP\" SUDO=\"sudo -p '' -S\" sh -c \"$@\"",
+    "deploy:scp": "echo \"\ud83d\udce4 Deploying '$OUT_FILE' to $DECK_USER@$DECK_IP:'$TMP_FILE'\" && scp $SCP_OPTS \"$OUT_FILE\" $DECK_USER@$DECK_IP:\"$TMP_FILE\"",
+    "deploy:rmdir": "echo \"\ud83d\uddd1\ufe0f  Cleaning up '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- rm -rf '$PLUGIN_DIR'\"",
+    "deploy:mkdir": "echo \"\ud83d\udcc1 Creating '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- mkdir -m 755 -p '$PLUGIN_DIR'\"",
+    "deploy:chown": "echo \"\ud83d\udd11 Changing ownership for '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO chown $DECK_USER:$DECK_USER '$PLUGIN_DIR'\"",
+    "deploy:extract": "echo \"\ud83d\udce6 Extracting '$TMP_FILE' to '$PLUGIN_DIR'\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- bsdtar -xzp -f '$TMP_FILE' -C '$PLUGIN_DIR' --strip-components=1 --fflags\"",
+    "deploy:restart": "echo \"\u267b\ufe0f  Restarting Decky\" && echo \"$DECK_PASS\" | ssh $SSH_OPTS \"$SUDO -- systemctl restart plugin_loader\"",
     "watch": "rollup -c -w",
-    "test": "npx eslint src/**"
+    "test": "npx eslint src/**",
+    "typecheck": "tsc --noEmit",
+    "test:backend": "PYTHONPATH=defaults/python python3 -m unittest discover -s tests -v",
+    "package": "python3 scripts/package_plugin.py"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FrogTheFrog/moondeck"
+    "url": "git+https://github.com/luker313/Vibedeck.git"
   },
   "keywords": [
     "decky",
@@ -31,12 +34,12 @@
     "steam-deck",
     "deck"
   ],
-  "author": "FrogTheFrog",
+  "author": "Luke Richards (MoonDeck by FrogTheFrog)",
   "license": "GNU GPLv3",
   "bugs": {
-    "url": "https://github.com/FrogTheFrog/moondeck/issues"
+    "url": "https://github.com/luker313/Vibedeck/issues"
   },
-  "homepage": "https://github.com/FrogTheFrog/moondeck#readme",
+  "homepage": "https://github.com/luker313/Vibedeck#readme",
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
     "@decky/ui": "^4.11.1",

@@ -1,9 +1,10 @@
 import { DialogControlsSection, DialogControlsSectionHeader, Field } from "@decky/ui";
 import { FC, useContext } from "react";
-import { HostSettings, videoCodecOptions } from "../../../lib";
-import { ListDropdown, OptionalBooleanDropdown, ToggleField } from "../../shared";
+import { HostSettings, emptyStreamingProfile } from "../../../lib";
+import { OptionalBooleanDropdown, ToggleField } from "../../shared";
 import { MoonDeckContext } from "../../../contexts";
 import { MoonlightExecutableSelection } from "./moonlightexecutableselection";
+import { StreamingProfileFields } from "../streamingprofilefields";
 
 interface Props {
   hostSettings: HostSettings;
@@ -22,41 +23,17 @@ export const GeneralSection: FC<Props> = ({ hostSettings }) => {
         value={hostSettings.passToMoonlight}
         setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.passToMoonlight = value; })}
       />
-      <Field
-        label="Video codec"
-        description="Codec to use when streaming. Current Moonlight setting will be used unless overriden."
-        childrenContainerWidth="fixed"
-      >
-        <ListDropdown
-          optionList={videoCodecOptions}
-          label="Don't override"
-          withOptionalValue={true}
-          value={hostSettings.videoCodec}
-          setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.videoCodec = value; })}
-        />
-      </Field>
-      <Field
-        label="Toggle V-sync"
-        description="V-sync option to use when streaming. Current Moonlight setting will be used unless overriden."
-        childrenContainerWidth="fixed"
-      >
-        <OptionalBooleanDropdown
-          value={hostSettings.enableVSync}
-          optValueLabel="Don't override"
-          setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.enableVSync = value; })}
-        />
-      </Field>
-      <Field
-        label="Toggle frame pacing"
-        description="Frame pacing option to use when streaming. Current Moonlight setting will be used unless overriden."
-        childrenContainerWidth="fixed"
-      >
-        <OptionalBooleanDropdown
-          value={hostSettings.enableFramePacing}
-          optValueLabel="Don't override"
-          setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.enableFramePacing = value; })}
-        />
-      </Field>
+      <StreamingProfileFields
+        value={{ ...emptyStreamingProfile(), ...hostSettings }}
+        includeRateAndHdr={false}
+        inheritLabel="Moonlight default"
+        setValue={(profile) => settingsManager.updateHost((host) => {
+          const { bitrate: _bitrate, fps: _fps, hdr: _hdr, ...options } = profile;
+          for (const key of ["videoCodec", "yuv444", "enableVrr", "smoothVrrFrameTiming", "absorbVrrMicrostutter", "enableVSync", "enableFramePacing"] as const) {
+            Object.assign(host, { [key]: options[key] });
+          }
+        })}
+      />
       <Field
         label="Toggle performance stats"
         description="Show or hide performance stats when streaming. Current Moonlight setting will be used unless overriden."

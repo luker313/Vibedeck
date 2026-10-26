@@ -299,6 +299,8 @@ class MoonDeckAppRunner:
         if not await proxy.is_moonlight_installed():
             raise RunnerError(Result.MoonlightIsNotInstalled)
 
+        await proxy.validate_options(cmd_options)
+
         logger.info("Terminating all Moonlight instances if any")
         await proxy.terminate_all_instances()
 

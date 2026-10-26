@@ -4,7 +4,7 @@ from ..settingsmanager import SettingsManager
 
 
 ControllerConfigOption = Literal["Disable", "Default", "Enable"]
-VideoCodecOption = Literal["AV1", "HEVC", "H.264", "Auto"]
+VideoCodecOption = Literal["AV1", "HEVC", "H.264", "Auto", "PyroWave"]
 AudioOption = Literal["stereo", "5.1-surround", "7.1-surround"]
 CloseSteamOption = Literal["Client", "BigPictureMode"]
 
@@ -28,13 +28,45 @@ class HostApp(TypedDict):
     apps: List[str]
 
 
-class Dimension(TypedDict):
-    width: int
-    height: int
+class StreamingOptions(TypedDict):
+    videoCodec: Optional[VideoCodecOption]
+    yuv444: Optional[bool]
+    enableVrr: Optional[bool]
+    smoothVrrFrameTiming: Optional[bool]
+    absorbVrrMicrostutter: Optional[bool]
+    enableVSync: Optional[bool]
+    enableFramePacing: Optional[bool]
+
+
+class StreamingProfile(StreamingOptions):
     bitrate: Optional[int]
     fps: Optional[int]
     hdr: Optional[bool]
+
+
+class TransportProfiles(TypedDict):
+    ethernet: StreamingProfile
+    wifi: StreamingProfile
+
+
+class NetworkSettings(TransportProfiles):
+    mode: Literal["Auto", "Ethernet", "WiFi"]
+
+
+def empty_streaming_profile() -> StreamingProfile:
+    return {key: None for key in StreamingProfile.__annotations__}
+
+
+def empty_transport_profiles() -> TransportProfiles:
+    return {"ethernet": empty_streaming_profile(), "wifi": empty_streaming_profile()}
+
+
+class Dimension(StreamingProfile):
+    width: int
+    height: int
+    label: str
     linkedDisplays: List[str]
+    networkOverrides: TransportProfiles
 
 
 class HostResolution(TypedDict):
@@ -80,7 +112,7 @@ class WolSettings(TypedDict):
     port: int
 
 
-class HostSettings(TypedDict):
+class HostSettings(StreamingOptions):
     hostInfoPort: int
     address: str
     staticAddress: bool
@@ -95,6 +127,7 @@ class HostSettings(TypedDict):
     enableVSync : Optional[bool]
     enableFramePacing : Optional[bool]
     videoCodec: Optional[VideoCodecOption]
+    networkSettings: NetworkSettings
     buddy: BuddySettings
     gameStreamApps: GameStreamAppsSettings
     nonSteamApps: NonSteamAppsSettings
@@ -124,7 +157,7 @@ class ButtonStyleSettings(TypedDict):
 
 
 class UserSettings(TypedDict):
-    version: Literal[43]
+    version: Literal[44]
     clientId: str
     currentHostId: Optional[str]
     gameSession: GameSessionSettings
@@ -140,6 +173,18 @@ class UserSettings(TypedDict):
 
 
 class UserSettingsManager(SettingsManager[UserSettings]):
+    async def read(self):
+        from .. import constants
+        settings, migrated = await super().read()
+        if settings is None and self.filepath == constants.get_config_file_path():
+            legacy = self.filepath.parent.parent / "moondeck" / "settings.json"
+            if legacy.is_file():
+                # Keep the Buddy client ID/pairing, and leave the original file
+                # untouched so uninstalling the fork remains reversible.
+                settings, _ = await UserSettingsManager(legacy).read()
+                migrated = settings is not None
+        return settings, migrated
+
     def _default_settings(self):
         # Lazy import to improve CLI performance
         import uuid
@@ -404,3 +449,14 @@ class UserSettingsManager(SettingsManager[UserSettings]):
         if data["version"] == 42:
             data["version"] = 43
             data["gameSession"]["closeHostAppOnExit"] = False
+        if data["version"] == 43:
+            data["version"] = 44
+            for host in data["hostSettings"].values():
+                for key in StreamingOptions.__annotations__:
+                    host.setdefault(key, None)
+                host["networkSettings"] = {"mode": "Auto", **empty_transport_profiles()}
+                for dimension in host["resolution"]["dimensions"]:
+                    for key in StreamingProfile.__annotations__:
+                        dimension.setdefault(key, None)
+                    dimension["label"] = ""
+                    dimension["networkOverrides"] = empty_transport_profiles()

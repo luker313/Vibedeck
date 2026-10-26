@@ -23,89 +23,89 @@ const MoonDeckRouter: FC<object> = () => {
         {
           title: "Setup Guide",
           content: <SetupGuideView />,
-          route: "/moondeck/setup-guide",
+          route: "/vibedeck/setup-guide",
           visible: true
         },
         {
           title: "Status Indicators",
           content: <StatusIndicatorsView />,
-          route: "/moondeck/status-indicators",
+          route: "/vibedeck/status-indicators",
           visible: true
         },
         {
           title: "Changelog",
           content: <ChangelogView />,
-          route: "/moondeck/changelog",
+          route: "/vibedeck/changelog",
           visible: true
         },
         "separator",
         {
           title: "Host Selection",
           content: <HostSelectionView />,
-          route: "/moondeck/host-selection",
+          route: "/vibedeck/host-selection",
           visible: true
         },
         {
           title: "Host Info",
           content: <HostInfoView />,
-          route: "/moondeck/host-info",
+          route: "/vibedeck/host-info",
           visible: true
         },
         "separator",
         {
           title: "Moonlight Settings",
           content: <MoonlightSettingsView />,
-          route: "/moondeck/resolution-settings",
+          route: "/vibedeck/resolution-settings",
           visible: true
         },
         {
           title: "Buddy Settings",
           content: <BuddySettingsView />,
-          route: "/moondeck/buddy-settings",
+          route: "/vibedeck/buddy-settings",
           visible: true
         },
         {
           title: "Runner Settings",
           content: <RunnerSettingsView />,
-          route: "/moondeck/runner-settings",
+          route: "/vibedeck/runner-settings",
           visible: true
         },
         {
           title: "WOL Settings",
           content: <WOLSettingsView />,
-          route: "/moondeck/wol-settings",
+          route: "/vibedeck/wol-settings",
           visible: true
         },
         "separator",
         {
           title: "MoonDeck Apps",
           content: <MoonDeckAppsView />,
-          route: "/moondeck/moondeck-apps",
+          route: "/vibedeck/moondeck-apps",
           visible: true
         },
         {
           title: "GameStream Apps",
           content: <GameStreamAppsView />,
-          route: "/moondeck/gamestream-apps",
+          route: "/vibedeck/gamestream-apps",
           visible: true
         },
         {
           title: "Non-Steam Apps",
           content: <NonSteamAppsView />,
-          route: "/moondeck/non-steam-apps",
+          route: "/vibedeck/non-steam-apps",
           visible: true
         },
         "separator",
         {
           title: "Game Session",
           content: <GameSessionView />,
-          route: "/moondeck/game-session",
+          route: "/vibedeck/game-session",
           visible: true
         },
         {
           title: "Button Style",
           content: <ButtonStyleView />,
-          route: "/moondeck/button-style",
+          route: "/vibedeck/button-style",
           visible: true
         }
       ]}
@@ -114,8 +114,8 @@ const MoonDeckRouter: FC<object> = () => {
 };
 
 export function MoonDeckRouterHook(): () => void {
-  routerHook.addRoute("/moondeck", () => <MoonDeckRouter />);
+  routerHook.addRoute("/vibedeck", () => <MoonDeckRouter />);
   return () => {
-    routerHook.removeRoute("/moondeck");
+    routerHook.removeRoute("/vibedeck");
   };
 }

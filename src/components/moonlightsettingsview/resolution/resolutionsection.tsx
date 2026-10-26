@@ -17,7 +17,7 @@ export const ResolutionSection: FC<Props> = ({ hostSettings }) => {
 
   return (
     <DialogControlsSection>
-      <DialogControlsSectionHeader>Resolution</DialogControlsSectionHeader>
+      <DialogControlsSectionHeader>Display profiles</DialogControlsSectionHeader>
       <Field
         label="Default bitrate in kbps (optional)"
         description="Bitrate to be applied when starting stream. Will be overridden by the one from custom resolution if provided."
@@ -60,13 +60,13 @@ export const ResolutionSection: FC<Props> = ({ hostSettings }) => {
         setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.automatic = value; })}
       />
       <ToggleField
-        label="Use custom resolution from the list"
+        label="Use selected display profile as fallback"
         description="This setting has no effect if the custom resolution list is empty."
         value={hostSettings.resolution.useCustomDimensions}
         setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.useCustomDimensions = value; })}
       />
       <Field
-        label="Selected custom resolution"
+        label="Selected display profile"
         childrenContainerWidth="fixed"
         bottomSeparator="none"
       >

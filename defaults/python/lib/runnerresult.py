@@ -27,7 +27,8 @@ class Result(Enum):
     AppLaunchAborted = "App launch was aborted!"
     AppLaunchFailed = "Failed to launch app in time!"
     MoonlightClosed = "Moonlight has been closed!"
-    MoonlightIsNotInstalled = "Moonlight executable/flatpak not found!"
+    MoonlightIsNotInstalled = "Nonary VRR Moonlight (Flatpak master branch) or selected executable not found!"
+    UnsupportedMoonlightOptions = "Selected Moonlight lacks the requested PyroWave/VRR options. Choose an up-to-date Nonary VRR client; see the runner log."
     Terminated = "TERMINATED"
 
 

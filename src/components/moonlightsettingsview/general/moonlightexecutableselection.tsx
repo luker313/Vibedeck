@@ -29,8 +29,8 @@ export const MoonlightExecutableSelection: FC = () => {
   return (
     <>
       <ToggleField
-        label="Use custom Moonlight executable"
-        description="Use provided executable instead of Flatpak version"
+        label="Use Nonary VRR AppImage / custom executable"
+        description="Otherwise uses Nonary's Flatpak master branch, not Flathub stable. Pair with Vibepollo in that same client first."
         bottomSeparator="none"
         value={userSettings.useMoonlightExec}
         setValue={(value) => settingsManager.update((userSettings) => { userSettings.useMoonlightExec = value; })}

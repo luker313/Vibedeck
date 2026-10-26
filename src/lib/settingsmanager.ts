@@ -13,7 +13,49 @@ export const minBitrate = 0 as const;
 export const minFps = 0 as const;
 export const audioOptions = ["stereo", "5.1-surround", "7.1-surround"] as const;
 export const closeSteamOption = ["Client", "BigPictureMode"] as const;
-export const videoCodecOptions = ["AV1", "HEVC", "H.264", "Auto"] as const;
+export const videoCodecOptions = ["PyroWave", "AV1", "HEVC", "H.264", "Auto"] as const;
+export const networkModeOptions = [
+  { id: "Auto", label: "Automatic (route to host)" },
+  { id: "Ethernet", label: "Force Ethernet profile" },
+  { id: "WiFi", label: "Force Wi-Fi profile" }
+] as const;
+
+export interface StreamingOptions {
+  videoCodec: typeof videoCodecOptions[number] | null;
+  yuv444: boolean | null;
+  enableVrr: boolean | null;
+  smoothVrrFrameTiming: boolean | null;
+  absorbVrrMicrostutter: boolean | null;
+  enableVSync: boolean | null;
+  enableFramePacing: boolean | null;
+}
+
+export interface StreamingProfile extends StreamingOptions {
+  bitrate: number | null;
+  fps: number | null;
+  hdr: boolean | null;
+}
+
+export interface TransportProfiles {
+  ethernet: StreamingProfile;
+  wifi: StreamingProfile;
+}
+
+export interface NetworkSettings extends TransportProfiles {
+  mode: typeof networkModeOptions[number]["id"];
+}
+
+export function emptyStreamingProfile(): StreamingProfile {
+  return {
+    videoCodec: null, yuv444: null, enableVrr: null, smoothVrrFrameTiming: null,
+    absorbVrrMicrostutter: null, enableVSync: null, enableFramePacing: null,
+    bitrate: null, fps: null, hdr: null
+  };
+}
+
+export function emptyTransportProfiles(): TransportProfiles {
+  return { ethernet: emptyStreamingProfile(), wifi: emptyStreamingProfile() };
+}
 
 export enum ControllerConfigValues {
   Disable = "Disable Steam Input",
@@ -60,13 +102,15 @@ export interface HostApp {
   apps: string[];
 }
 
-export interface Dimension {
+export interface Dimension extends StreamingProfile {
   width: number;
   height: number;
   bitrate: number | null;
   fps: number | null;
   hdr: boolean | null;
   linkedDisplays: string[];
+  label: string;
+  networkOverrides: TransportProfiles;
 }
 
 export interface HostResolution {
@@ -111,7 +155,7 @@ export interface WolSettings {
   port: number;
 }
 
-export interface HostSettings {
+export interface HostSettings extends StreamingOptions {
   hostInfoPort: number;
   address: string;
   staticAddress: boolean;
@@ -125,6 +169,7 @@ export interface HostSettings {
   enableVSync: boolean | null;
   enableFramePacing: boolean | null;
   videoCodec: typeof videoCodecOptions[number] | null;
+  networkSettings: NetworkSettings;
   runnerTimeouts: RunnerTimeouts;
   buddy: BuddySettings;
   gameStreamApps: GameStreamAppsSettings;
@@ -179,7 +224,13 @@ export function stringifyDimension(value: Dimension): string {
   if (value.hdr !== null) {
     other.push(value.hdr ? "HDR On" : "HDR Off");
   }
-  return `${value.width}x${value.height}${fps}${other.length > 0 ? ` (${other.join(", ")})` : ""}`;
+  if (value.videoCodec !== null) {
+    other.push(value.videoCodec);
+  }
+  if (value.enableVrr !== null) {
+    other.push(value.enableVrr ? "VRR On" : "VRR Off");
+  }
+  return `${value.label ? `${value.label}: ` : ""}${value.width}x${value.height}${fps}${other.length > 0 ? ` (${other.join(", ")})` : ""}`;
 }
 
 async function getHomeDir(): Promise<string | null> {
@@ -258,6 +309,14 @@ export class SettingsManager {
 
   init(): void {
     this.refresh().catch((e) => logger.critical(e));
+  }
+
+  async flush(): Promise<void> {
+    this.setUserSettingsThrottled.cancel();
+    const settings = this.settings.value;
+    if (settings !== null) {
+      await setUserSettings(settings);
+    }
   }
 
   deinit(): void {
