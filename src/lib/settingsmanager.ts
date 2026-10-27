@@ -218,21 +218,8 @@ export interface UserSettings {
 }
 
 export function stringifyDimension(value: Dimension): string {
-  const fps = value.fps === null ? "" : `@${value.fps}`;
-  const other: string[] = [];
-  if (value.bitrate !== null) {
-    other.push(`${value.bitrate} kbps`);
-  }
-  if (value.hdr !== null) {
-    other.push(value.hdr ? "HDR On" : "HDR Off");
-  }
-  if (value.videoCodec !== null) {
-    other.push(value.videoCodec);
-  }
-  if (value.enableVrr !== null) {
-    other.push(value.enableVrr ? "VRR On" : "VRR Off");
-  }
-  return `${value.label ? `${value.label}: ` : ""}${value.width}x${value.height}${fps}${other.length > 0 ? ` (${other.join(", ")})` : ""}`;
+  // Rates and codecs vary by network; the editor shows their resolved values.
+  return `${value.label ? `${value.label}: ` : ""}${value.width}x${value.height}`;
 }
 
 async function getHomeDir(): Promise<string | null> {

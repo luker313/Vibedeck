@@ -93,6 +93,11 @@ class Plugin:
         except Exception:
             logger.exception("Failed to set user settings")
 
+    async def get_network_route(self, address: str):
+        # Read-only preview uses the same route detection as stream launch.
+        from lib.networkprofile import detect_host_network
+        return await detect_host_network(address)
+
     @utils.async_scope_log(logger.info)
     async def scan_for_hosts(self, timeout: float):
         try:

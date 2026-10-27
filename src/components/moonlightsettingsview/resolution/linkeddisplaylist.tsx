@@ -78,7 +78,7 @@ export const LinkedDisplayList: FC<Props> = ({ hostSettings }) => {
         label="Enable display linking"
         description={
           <>
-            <div>Here you can link the display to the custom resolution. MoonDeck will automatically select the linked resolution for the primary display in this list. This will work regardless of whether the custom resolution option is enabled or not.</div>
+            <div>Link each screen to its profile. Vibedeck uses that profile's Defaults, Wi-Fi and Ethernet settings when this is the primary screen. Linked profiles take priority over the selected fallback.</div>
             <br />
             <div>Note: Steam provides a very limited information about the displays, so nearly identical displays cannot be differentiated.</div>
           </>
@@ -88,7 +88,7 @@ export const LinkedDisplayList: FC<Props> = ({ hostSettings }) => {
         bottomSeparator="none"
       />
       <Field
-        label="Link display to custom resolution"
+        label="Link screen to profile"
       >
         <DialogButton
           disabled={!hasCustomResolutions || linking}

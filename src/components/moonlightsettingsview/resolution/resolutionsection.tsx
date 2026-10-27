@@ -1,8 +1,7 @@
 import { DialogControlsSection, DialogControlsSectionHeader, Field, Focusable } from "@decky/ui";
 import { FC, useContext } from "react";
 import { ModifyListButton, RemoveListEntryButton } from "../../shared/indexedlist";
-import { NumericTextInput, OptionalBooleanDropdown, ResolutionSelectionDropdown, ToggleField } from "../../shared";
-import { maxBitrate, minBitrate, minFps } from "../../../lib";
+import { ResolutionSelectionDropdown, ToggleField } from "../../shared";
 import { CurrentHostSettings } from "../../../hooks";
 import { LinkedDisplayList } from "./linkeddisplaylist";
 import { ModifyResolutionModal } from "./modifyresolutionmodal";
@@ -17,43 +16,7 @@ export const ResolutionSection: FC<Props> = ({ hostSettings }) => {
 
   return (
     <DialogControlsSection>
-      <DialogControlsSectionHeader>Display profiles</DialogControlsSectionHeader>
-      <Field
-        label="Default bitrate in kbps (optional)"
-        description="Bitrate when starting a stream, unless a display or network profile overrides it. 1000000 kbps = 1 Gbps; maximum 3000000 kbps."
-        childrenContainerWidth="fixed"
-      >
-        <NumericTextInput
-          min={minBitrate}
-          max={maxBitrate}
-          optional={true}
-          value={hostSettings.resolution.defaultBitrate}
-          setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.defaultBitrate = value; })}
-        />
-      </Field>
-      <Field
-        label="Default FPS (optional)"
-        description="FPS to be applied when starting stream. Will be overridden by the one from custom resolution if provided. Providing FPS without bitrate will trigger Moonlight to automatically calculate the bitrate!"
-        childrenContainerWidth="fixed"
-      >
-        <NumericTextInput
-          min={minFps}
-          optional={true}
-          value={hostSettings.resolution.defaultFps}
-          setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.defaultFps = value; })}
-        />
-      </Field>
-      <Field
-        label="Default HDR"
-        description="HDR to be applied when starting stream. Will be overridden by the one from custom resolution if provided."
-        childrenContainerWidth="fixed"
-      >
-        <OptionalBooleanDropdown
-          value={hostSettings.resolution.defaultHdr}
-          optValueLabel="Don't override"
-          setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.defaultHdr = value; })}
-        />
-      </Field>
+      <DialogControlsSectionHeader>Screen profiles</DialogControlsSectionHeader>
       <ToggleField
         label="Use SteamDeck's primary resolution as fallback"
         description="If custom resolution is disabled, SteamDeck's primary resolution will be used - that of internal or external display."
@@ -67,7 +30,8 @@ export const ResolutionSection: FC<Props> = ({ hostSettings }) => {
         setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.useCustomDimensions = value; })}
       />
       <Field
-        label="Selected display profile"
+        label="Profile to edit / fallback"
+        description="Edit this screen's Defaults, Wi-Fi and Ethernet tabs below. A linked screen profile takes priority over the selected fallback."
         childrenContainerWidth="fixed"
         bottomSeparator="none"
       >

@@ -57,7 +57,7 @@ export const ListDropdown: <T extends OptionList>(props: Props<T>) => ReactEleme
     } else {
       setOptions([]);
     }
-  }, [optionList]);
+  }, [optionList, withOptionalValue, label, stringifySimpleLabels]);
 
   return (
     <Dropdown

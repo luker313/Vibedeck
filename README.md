@@ -13,13 +13,15 @@ connection.
 - Ethernet/Wi-Fi overrides for the host and for each screen.
 - Force Moonlight's performance stats overlay on or off, independently of
   other streaming overrides.
+- Clear Defaults / Wi-Fi / Ethernet editing tabs, inherited values with their
+  sources, and a read-only preview for the next connection.
 - Route-based transport detection, plus manual selection for VPNs or unusual
   networks. Detection follows the host address configured in Vibedeck.
 - Explicit Nonary Flatpak `master` selection, or a custom AppImage/executable.
 - Compatibility checks for requested PyroWave/VRR options, and separate
   settings with a one-time import of existing MoonDeck pairing and profiles.
 
-**0.1.3 is a hardware-testing prerelease.** The automated checks and frontend
+**0.1.4 is a hardware-testing prerelease.** The automated checks and frontend
 build are covered; end-to-end streaming must be checked on your Deck/TV setup.
 See [scope](docs/SCOPE.md) and [verification](docs/TESTING.md).
 
@@ -48,15 +50,40 @@ rebound to this plugin's runner on first launch.
 
 ## Set profiles once
 
-In **Moonlight Settings**, enable passing options to Moonlight. Set the host
-fallbacks, add named **Display profiles**, and link each screen to its profile.
-Open a display profile and use **Edit settings for** to choose display defaults,
-Ethernet overrides, or Wi-Fi overrides. The **Network profiles** section also
-provides host-wide overrides and automatic/manual transport selection.
+In **Moonlight Settings**, enable **Use Vibedeck streaming profiles**, add named
+**Screen profiles**, and link each screen to its profile. Open a screen profile:
+
+- **Defaults** supplies settings for both networks unless a network override
+  is set. Blank fields inherit the shared defaults for this host.
+- **Wi-Fi** and **Ethernet** contain overrides for this screen on that network.
+  Leave a field blank or select **Inherit** to keep the inherited value shown
+  beside it, such as `Inherited: 40 Mbps — screen defaults` or
+  `Inherited: AV1 — shared Wi-Fi override`.
+- **Save profile — all tabs** saves the screen defaults and both network variants.
+  The per-network summaries include all shared and screen overrides.
+
+**Connection for the next stream** is the single place to select Automatic or a
+forced network profile. It shows the detected route, the chosen network settings
+and the linked or fallback screen profile. Editing a Wi-Fi/Ethernet tab does not
+select it for streaming. A forced profile chooses settings; it does not move
+traffic onto that network. The detected route refreshes every 15 seconds or with
+**Refresh connection**, and the runner checks it again at launch/resume.
+
+**Advanced shared settings** groups the existing host defaults and shared network
+overrides. These apply to all screens on this host. Collapsing the controls does
+not disable them; configured shared overrides also appear in the connection
+summary. Inherited previews inside Advanced identify the screen they refer to,
+and warn when that screen's network override replaces a shared value.
 
 Later non-inherited values win:
 
 **Host defaults → display profile → host network overrides → display network overrides.**
+
+Version 0.1.4 reuses the existing settings fields and preserves this priority.
+No settings migration or reset is performed: saved values, explicit off choices,
+blank inheritance, screen links, pairing, network mode and performance stats are
+retained. Requested previews leave unknown Moonlight defaults/automatic values
+unspecified; actual negotiated settings remain available in Moonlight's stats.
 
 For example, configure Ethernet to request PyroWave/4:4:4 at a bitrate your
 wired LAN can sustain, and Wi-Fi to request AV1/4:2:0 at a lower bitrate. Each

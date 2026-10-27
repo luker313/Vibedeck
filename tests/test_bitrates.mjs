@@ -1,44 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { loadSource, profiles, settings } from "./frontend_helpers.mjs";
 import test from "node:test";
-import { runInNewContext } from "node:vm";
-import ts from "typescript";
 
-// Render the real controls without Decky's runtime, then use the actual numeric
-// converter so this catches the UI rejecting an otherwise valid saved profile.
-const jsx = (type, props) => ({ type, props });
-const jsxRuntime = { jsx, jsxs: jsx, Fragment: "Fragment" };
-function loadSource(path, imports) {
-  const source = readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-  const { outputText } = ts.transpileModule(source, {
-    compilerOptions: {
-      target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
-      jsx: ts.JsxEmit.ReactJSX
-    }
-  });
-  const exports = {};
-  runInNewContext(outputText, {
-    exports,
-    require(name) {
-      if (name === "react/jsx-runtime") return jsxRuntime;
-      assert.ok(Object.hasOwn(imports, name), `Unexpected dependency: ${name}`);
-      return imports[name];
-    }
-  }, { filename: path });
-  return exports;
-}
-
-const settings = loadSource("src/lib/settingsmanager.ts", {
-  lodash: {}, rxjs: {}, "async-mutex": {}, "./readonlysubject": {},
-  "@decky/api": {}, "./logger": {}
-});
 const numeric = loadSource("src/components/shared/numerictextinput.tsx", {
   "./textinput": { TextInput: "TextInput" }
 });
 const shared = { ...numeric, ListDropdown: "ListDropdown", OptionalBooleanDropdown: "OptionalBooleanDropdown" };
 const { StreamingProfileFields } = loadSource("src/components/moonlightsettingsview/streamingprofilefields.tsx", {
   react: { useState: (value) => [value, () => {}] },
-  "../shared": shared, "../../lib": settings, "@decky/ui": { Field: "Field" }
+  "../shared": shared, "../../lib": settings, "../../lib/streamingprofile": profiles, "@decky/ui": { Field: "Field" }
 });
 
 function findBitrateInput(node) {

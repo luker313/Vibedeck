@@ -21,6 +21,12 @@ including the 3 Gbps boundary and blank inheritance. Backend coverage verifies
 that these rates survive settings validation and profile resolution into CLI
 arguments without clamping, while Wi-Fi retains its independent bitrate.
 The frontend is also type-checked, linted and bundled.
+The profile UI suite compares 288 previews with the existing Python runner,
+covering each network, linked/fallback screens and inherited/explicit off values.
+It exercises opening, editing, cancelling and saving the real screen editor,
+including preserving both network variants, links and existing metadata. Shared
+controls are checked for preserving unrelated settings; connection previews
+distinguish forced settings from detected routing and profiles switched off.
 Packaging verifies that the frontend and Buddy trust certificate exist and
 produces a ZIP plus SHA-256 checksum. Build the plugin with its vendored Python
 dependencies for Decky's Python runtime; a desktop machine's Python can still
@@ -63,6 +69,17 @@ Keep the host address in Moonlight and Vibedeck consistent.
     stream and verify the requested `--bitrate` in the runner log. Reconnect on
     Wi-Fi and confirm it uses that profile's separate AV1 bitrate. The UI accepts
     up to 3000000 kbps; acceptance is not proof the link can sustain that rate.
+11. With existing settings, open each screen's Defaults, Wi-Fi and Ethernet tabs.
+    Confirm blank fields name their inherited value and source, and the two
+    requested summaries match the intended settings. Switch tabs, close without
+    saving, and confirm nothing changed. Save a single override and reopen it;
+    the other tab, defaults, explicit off values and links must remain unchanged.
+12. Open Advanced shared settings. Confirm old host defaults and shared overrides
+    are present, including the warning when a screen override replaces them.
+    Close Advanced and verify its existing settings remain in effect. Compare
+    detected connection, forced mode and selected screen in the top summary.
+    Unplug/reconnect Ethernet and use Refresh connection. Confirm the preview
+    changes without applying settings to an already-running stream.
 
 These checks are pending on user hardware; passing automated tests does not
 establish end-to-end streaming compatibility or performance.
