@@ -1,6 +1,6 @@
 {
   "name": "vibedeck",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Display-aware MoonDeck fork for Nonary's Vibepollo and VRR Moonlight.",
   "type": "module",
   "scripts": {
@@ -20,6 +20,7 @@
     "watch": "rollup -c -w",
     "test": "npx eslint src/**",
     "typecheck": "tsc --noEmit",
+    "test:frontend": "node --test tests/test_shortcuts.mjs",
     "test:backend": "PYTHONPATH=defaults/python python3 -m unittest discover -s tests -v",
     "package": "python3 scripts/package_plugin.py"
   },

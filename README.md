@@ -17,7 +17,7 @@ connection.
 - Compatibility checks for requested PyroWave/VRR options, and separate
   settings with a one-time import of existing MoonDeck pairing and profiles.
 
-**0.1.0 is a hardware-testing prerelease.** The automated checks and frontend
+**0.1.1 is a hardware-testing prerelease.** The automated checks and frontend
 build are covered; end-to-end streaming must be checked on your Deck/TV setup.
 See [scope](docs/SCOPE.md) and [verification](docs/TESTING.md).
 
@@ -74,6 +74,7 @@ cd Vibedeck
 pnpm install --frozen-lockfile
 pnpm run test
 pnpm run typecheck
+pnpm run test:frontend
 pnpm run test:backend
 pnpm run build:plugin
 ```
@@ -84,6 +85,9 @@ The fork retains upstream's vendored Python dependencies for the Decky runtime.
 
 ## Troubleshooting
 
+- Version 0.1.1 fixes imported MoonDeck shortcuts being rejected with
+  "Failed to create shortcut (needs restart?)!". Update the plugin and restart
+  Steam; existing shortcuts are rebound in place, preserving their IDs.
 - Runner decisions and resolved profile: `/tmp/vibedeck-runner.log`.
 - Moonlight output: `/tmp/vibedeck-runner-moonlight.log`.
 - Backend/frontend: `/tmp/vibedeck-backend.log`, `/tmp/vibedeck-frontend.log`.

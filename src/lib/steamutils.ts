@@ -47,12 +47,17 @@ export async function getMoonDeckRunPath(): Promise<string | null> {
   return MoonDeckRunPath;
 }
 
+function normalizeShortcutExecutable(value: string): string {
+  const path = value.trim();
+  return path.startsWith("\"") && path.endsWith("\"") ? path.slice(1, -1) : path;
+}
+
 export function isMoonDeckShortcut(details: AppDetails): boolean {
-  return details.strShortcutExe.includes("moondeckrun.sh");
+  return normalizeShortcutExecutable(details.strShortcutExe).endsWith("/moondeckrun.sh");
 }
 
 export function checkExecPathMatch(execPath: string, shortcutExe: string): boolean {
-  return new RegExp(`^${execPath}|"${execPath}"$`).test(shortcutExe);
+  return normalizeShortcutExecutable(execPath) === normalizeShortcutExecutable(shortcutExe);
 }
 
 export async function getAppDetailsForAppIds(appIds: number[]): Promise<AppDetails[]> {

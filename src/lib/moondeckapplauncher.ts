@@ -1,4 +1,4 @@
-import { AppStartResult, AppType, ControllerConfigOption, EnvVars, checkExecPathMatch, getAppDetails, getAudioDevices, getCurrentDisplayModeString, getCurrentUserSteamId, getDisplayIdentifiers, getMoonDeckRunPath, getSystemNetworkStore, launchApp, registerForGameLaunchIntercept, registerForGameLifetime, registerForSuspendNotifications, setAppHiddenState, setAppLaunchOptions, setAppResolutionOverride, setOverrideResolutionForInternalDisplay, setShortcutName, waitForAppDetails } from "./steamutils";
+import { AppStartResult, AppType, ControllerConfigOption, EnvVars, checkExecPathMatch, getAppDetails, getAudioDevices, getCurrentDisplayModeString, getCurrentUserSteamId, getDisplayIdentifiers, getMoonDeckRunPath, getSystemNetworkStore, isMoonDeckShortcut, launchApp, registerForGameLaunchIntercept, registerForGameLifetime, registerForSuspendNotifications, setAppHiddenState, setAppLaunchOptions, setAppResolutionOverride, setOverrideResolutionForInternalDisplay, setShortcutName, waitForAppDetails } from "./steamutils";
 import { ControllerConfigValues, Dimension, HostResolution, HostSettings, SettingsManager } from "./settingsmanager";
 import { Subscription, pairwise } from "rxjs";
 import { getEnvKeyValueString, makeEnvKeyValue } from "./envutils";
@@ -173,7 +173,7 @@ export class MoonDeckAppLauncher {
       // An imported MoonDeck shortcut still points into the old plugin folder.
       // Rebind only our known runner; preserve the shortcut ID and controls.
       const previousPath = details.strShortcutExe.replace(/^"|"$/g, "");
-      if (!previousPath.endsWith("/vibedeckrun.sh")) {
+      if (!isMoonDeckShortcut(details)) {
         logger.error(`Unexpected shortcut executable for ${appId}: ${previousPath}`);
         return null;
       }
