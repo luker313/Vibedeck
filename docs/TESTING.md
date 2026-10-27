@@ -48,6 +48,12 @@ Keep the host address in Moonlight and Vibedeck consistent.
    the actionable compatibility error and missing features in the runner log.
 8. Test an existing Steam game, a synced non-Steam game and a direct Vibepollo
    app. Confirm game launch, stream exit, WOL and Buddy power actions.
+9. Set **Performance stats overlay → Force on**. Test both the Flatpak and
+   custom executable with passing other Moonlight options on and off. Start
+   a fresh stream and confirm the stats are visible; compare codec, resolution,
+   FPS and bitrate with the intended profile where Moonlight reports them.
+   Repeat with **Force off** and **Use Moonlight setting**. These choices
+   apply on the next connection and do not toggle an already-running stream.
 
 These checks are pending on user hardware; passing automated tests does not
 establish end-to-end streaming compatibility or performance.

@@ -129,7 +129,9 @@ def parse_cmd_options(pass_to_moonlight: bool, host_settings: HostSettings, env_
     options = CommandLineOptions({
         "audio": parse_audio_settings(host_settings=host_settings, env_settings=env_settings) if pass_to_moonlight else None,
         "resolution": resolution,
-        "show_performance_stats": host_settings["showPerformanceStats"] if pass_to_moonlight else None,
+        # Stats are an independent diagnostic override, including when the
+        # streaming/audio settings are inherited directly from Moonlight.
+        "show_performance_stats": host_settings["showPerformanceStats"],
         "enable_v_sync": profile["enableVSync"] if pass_to_moonlight else None,
         "enable_frame_pacing": profile["enableFramePacing"] if pass_to_moonlight else None,
         "video_codec": profile["videoCodec"] if pass_to_moonlight else None,

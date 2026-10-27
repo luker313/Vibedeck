@@ -120,6 +120,27 @@ class ProfileTests(unittest.TestCase):
         standalone = parse_cmd_options(False, self.host, environment(runner=RunnerType.MoonlightOnly))
         self.assertEqual(stream_arguments(standalone), [])
 
+    def test_performance_stats_override_is_independent_of_streaming_profiles(self):
+        self.display.update(videoCodec="PyroWave", enableVrr=True)
+        for pass_options in (True, False):
+            for runner in (RunnerType.MoonDeck, RunnerType.MoonlightOnly):
+                for transport in ("ethernet", "wifi"):
+                    for stats in (None, True, False):
+                        with self.subTest(pass_options=pass_options, runner=runner,
+                                          transport=transport, stats=stats):
+                            self.host["showPerformanceStats"] = stats
+                            options = parse_cmd_options(pass_options, self.host,
+                                                        environment(runner=runner), transport)
+                            self.assertIs(options["show_performance_stats"], stats)
+                            args = stream_arguments(options)
+                            expected = ([] if stats is None else
+                                        ["--performance-overlay" if stats else "--no-performance-overlay"])
+                            actual = [arg for arg in args if "performance-overlay" in arg]
+                            self.assertEqual(actual, expected)
+                            if not pass_options:
+                                required = ["--no-quit-after"] if runner == RunnerType.MoonDeck else []
+                                self.assertEqual(args, required + expected)
+
     def test_nonary_cli_arguments_and_feature_checks(self):
         self.display.update(videoCodec="PyroWave", yuv444=True, enableVrr=True,
                             smoothVrrFrameTiming=True, absorbVrrMicrostutter=False)
@@ -179,6 +200,24 @@ class NetworkTests(unittest.IsolatedAsyncioTestCase):
 
 
 class SettingsAndClientTests(unittest.IsolatedAsyncioTestCase):
+    async def test_forced_stats_reach_the_selected_moonlight_executable(self):
+        host = host_fixture()
+        host["showPerformanceStats"] = True
+        options = parse_cmd_options(False, host, environment())
+        for executable in (None, "/tmp/Nonary Moonlight.AppImage"):
+            with self.subTest(executable=executable):
+                process = Mock(pid=1234)
+                with patch("lib.utils.create_subprocess_exec", AsyncMock(return_value=process)) as launch, \
+                     patch("lib.utils.ProcessReaper"), \
+                     patch.object(MoonlightProxy, "_MoonlightProxy__get_flatpak_exec", return_value="/usr/bin/flatpak"):
+                    proxy = MoonlightProxy(executable)
+                    await proxy.start("Vibepollo", "MoonDeckStream", options)
+                    prefix = (["/usr/bin/flatpak", "run", "--branch=master", MoonlightProxy.flatpak_moonlight]
+                              if executable is None else [executable])
+                    self.assertEqual(launch.call_args.args,
+                                     tuple(prefix + ["--no-quit-after", "--performance-overlay",
+                                                     "stream", "Vibepollo", "MoonDeckStream"]))
+
     async def test_v43_migration_preserves_pairing_and_display_links(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "settings.json"

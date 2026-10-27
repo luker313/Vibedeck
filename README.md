@@ -11,13 +11,15 @@ connection.
 - Display-linked profiles for resolution, FPS, HDR, bitrate, codec, chroma,
   VRR pacing, VRR smoothing, microstutter absorption, V-sync and frame pacing.
 - Ethernet/Wi-Fi overrides for the host and for each screen.
+- Force Moonlight's performance stats overlay on or off, independently of
+  other streaming overrides.
 - Route-based transport detection, plus manual selection for VPNs or unusual
   networks. Detection follows the host address configured in Vibedeck.
 - Explicit Nonary Flatpak `master` selection, or a custom AppImage/executable.
 - Compatibility checks for requested PyroWave/VRR options, and separate
   settings with a one-time import of existing MoonDeck pairing and profiles.
 
-**0.1.1 is a hardware-testing prerelease.** The automated checks and frontend
+**0.1.2 is a hardware-testing prerelease.** The automated checks and frontend
 build are covered; end-to-end streaming must be checked on your Deck/TV setup.
 See [scope](docs/SCOPE.md) and [verification](docs/TESTING.md).
 
@@ -85,6 +87,10 @@ The fork retains upstream's vendored Python dependencies for the Decky runtime.
 
 ## Troubleshooting
 
+- To check an active stream, set **Moonlight Settings → Performance stats
+  overlay → Force on**, then start or reconnect the stream. This works even
+  with **Pass audio, resolution and other options** switched off. Choose
+  **Force off** to hide the overlay or **Use Moonlight setting** to inherit.
 - Version 0.1.1 fixes imported MoonDeck shortcuts being rejected with
   "Failed to create shortcut (needs restart?)!". Update the plugin and restart
   Steam; existing shortcuts are rebound in place, preserving their IDs.
