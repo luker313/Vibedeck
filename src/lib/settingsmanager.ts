@@ -10,6 +10,8 @@ export const buttonStyles = ["HighContrast", "Clean"] as const;
 export const horizontalAlignmentValues = ["top", "bottom"] as const;
 export const verticalAlignmentValues = ["left", "right"] as const;
 export const minBitrate = 0 as const;
+// Match Nonary Moonlight's PyroWave slider, including inherited codecs.
+export const maxBitrate = 3_000_000 as const;
 export const minFps = 0 as const;
 export const audioOptions = ["stereo", "5.1-surround", "7.1-surround"] as const;
 export const closeSteamOption = ["Client", "BigPictureMode"] as const;

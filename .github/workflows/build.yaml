@@ -34,7 +34,7 @@ jobs:
         run: pnpm run test
       - name: Typecheck
         run: pnpm run typecheck
-      - name: Shortcut regression tests
+      - name: Frontend regression tests
         run: pnpm run test:frontend
       - name: Backend regression tests
         run: pnpm run test:backend

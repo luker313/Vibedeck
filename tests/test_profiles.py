@@ -94,6 +94,32 @@ class ProfileTests(unittest.TestCase):
         self.host["networkSettings"]["ethernet"]["videoCodec"] = "PyroWave"
         self.assertEqual(resolve_streaming_profile(self.host, self.display, "unknown")["videoCodec"], "AV1")
 
+    def test_multigigabit_bitrates_reach_cli_unchanged_for_each_layer(self):
+        for layer in ("host", "display", "host_network", "display_network"):
+            for bitrate in (500001, 1000000, 3000000):
+                with self.subTest(layer=layer, bitrate=bitrate):
+                    host = host_fixture()
+                    display = display_fixture()
+                    host["resolution"]["dimensions"] = [display]
+                    host["videoCodec"] = "PyroWave"
+                    if layer == "host":
+                        host["resolution"]["defaultBitrate"] = bitrate
+                    elif layer == "display":
+                        display["bitrate"] = bitrate
+                    elif layer == "host_network":
+                        host["networkSettings"]["ethernet"]["bitrate"] = bitrate
+                    else:
+                        display["networkOverrides"]["ethernet"]["bitrate"] = bitrate
+                    display["networkOverrides"]["wifi"].update(videoCodec="AV1", bitrate=40000)
+                    # Round-trip persisted JSON through the actual settings validator.
+                    loaded = from_dict(HostSettings, json.loads(json.dumps(host)))
+                    args = stream_arguments(parse_cmd_options(True, loaded, environment(), "ethernet"))
+                    self.assertEqual(args[args.index("--bitrate") + 1], str(bitrate))
+                    self.assertEqual(args[args.index("--video-codec") + 1], "PyroWave")
+                    wifi = stream_arguments(parse_cmd_options(True, loaded, environment(), "wifi"))
+                    self.assertEqual(wifi[wifi.index("--bitrate") + 1], "40000")
+                    self.assertEqual(wifi[wifi.index("--video-codec") + 1], "AV1")
+
     def test_linked_display_beats_selected_fallback_and_does_not_mutate(self):
         other = display_fixture("Deck")
         other.update(width=1280, height=800)

@@ -19,7 +19,7 @@ connection.
 - Compatibility checks for requested PyroWave/VRR options, and separate
   settings with a one-time import of existing MoonDeck pairing and profiles.
 
-**0.1.2 is a hardware-testing prerelease.** The automated checks and frontend
+**0.1.3 is a hardware-testing prerelease.** The automated checks and frontend
 build are covered; end-to-end streaming must be checked on your Deck/TV setup.
 See [scope](docs/SCOPE.md) and [verification](docs/TESTING.md).
 
@@ -63,6 +63,13 @@ wired LAN can sustain, and Wi-Fi to request AV1/4:2:0 at a lower bitrate. Each
 screen can have its own HDR, FPS and VRR settings. The controls request these
 features; hardware and the client/host determine what can actually be used.
 PyroWave's calibration and FEC remain under Nonary's client/host control.
+
+Bitrate fields accept up to **3000000 kbps (3 Gbps)**, matching Nonary
+Moonlight's PyroWave slider. For example, **1000000 kbps is 1 Gbps**. For
+PyroWave, copy the bitrate from Moonlight's calibration for that display and
+network. Vibedeck passes an explicit bitrate unchanged; a blank field inherits
+the earlier layer. Nonary's client and host still handle packet pacing and FEC.
+Version 0.1.3 removes the previous 500 Mbps limit from display and network profiles.
 
 Profiles apply at stream start. Network selection is refreshed on resume.
 Reconnect after changing screens while suspended or changing codec/chroma

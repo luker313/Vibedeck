@@ -16,6 +16,10 @@ network classification and timeouts, CLI arguments, capability rejection, and
 settings migration/import. The frontend regression suite executes the real
 launcher against mocked Steam APIs, checking imported and quoted runner paths,
 shortcut ID preservation, failed executable updates, and literal path matching.
+It also exercises the real bitrate field's input validation above 500 Mbps,
+including the 3 Gbps boundary and blank inheritance. Backend coverage verifies
+that these rates survive settings validation and profile resolution into CLI
+arguments without clamping, while Wi-Fi retains its independent bitrate.
 The frontend is also type-checked, linted and bundled.
 Packaging verifies that the frontend and Buddy trust certificate exist and
 produces a ZIP plus SHA-256 checksum. Build the plugin with its vendored Python
@@ -54,6 +58,11 @@ Keep the host address in Moonlight and Vibedeck consistent.
    FPS and bitrate with the intended profile where Moonlight reports them.
    Repeat with **Force off** and **Use Moonlight setting**. These choices
    apply on the next connection and do not toggle an already-running stream.
+10. Save an Ethernet PyroWave bitrate above 500000 kbps using a rate calibrated
+    for the wired link. Reopen the profile to confirm it was saved. Start a new
+    stream and verify the requested `--bitrate` in the runner log. Reconnect on
+    Wi-Fi and confirm it uses that profile's separate AV1 bitrate. The UI accepts
+    up to 3000000 kbps; acceptance is not proof the link can sustain that rate.
 
 These checks are pending on user hardware; passing automated tests does not
 establish end-to-end streaming compatibility or performance.

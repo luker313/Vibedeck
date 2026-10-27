@@ -2,7 +2,7 @@ import { DialogControlsSection, DialogControlsSectionHeader, Field, Focusable } 
 import { FC, useContext } from "react";
 import { ModifyListButton, RemoveListEntryButton } from "../../shared/indexedlist";
 import { NumericTextInput, OptionalBooleanDropdown, ResolutionSelectionDropdown, ToggleField } from "../../shared";
-import { minBitrate, minFps } from "../../../lib";
+import { maxBitrate, minBitrate, minFps } from "../../../lib";
 import { CurrentHostSettings } from "../../../hooks";
 import { LinkedDisplayList } from "./linkeddisplaylist";
 import { ModifyResolutionModal } from "./modifyresolutionmodal";
@@ -20,11 +20,12 @@ export const ResolutionSection: FC<Props> = ({ hostSettings }) => {
       <DialogControlsSectionHeader>Display profiles</DialogControlsSectionHeader>
       <Field
         label="Default bitrate in kbps (optional)"
-        description="Bitrate to be applied when starting stream. Will be overridden by the one from custom resolution if provided."
+        description="Bitrate when starting a stream, unless a display or network profile overrides it. 1000000 kbps = 1 Gbps; maximum 3000000 kbps."
         childrenContainerWidth="fixed"
       >
         <NumericTextInput
           min={minBitrate}
+          max={maxBitrate}
           optional={true}
           value={hostSettings.resolution.defaultBitrate}
           setValue={(value) => settingsManager.updateHost((hostSettings) => { hostSettings.resolution.defaultBitrate = value; })}

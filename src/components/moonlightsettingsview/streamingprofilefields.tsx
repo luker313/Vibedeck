@@ -1,6 +1,6 @@
 import { FC, useState } from "react";
 import { ListDropdown, NumericTextInput, OptionalBooleanDropdown } from "../shared";
-import { StreamingProfile, videoCodecOptions } from "../../lib";
+import { StreamingProfile, maxBitrate, videoCodecOptions } from "../../lib";
 import { Field } from "@decky/ui";
 
 interface Props {
@@ -34,8 +34,8 @@ export const StreamingProfileFields: FC<Props> = ({ value, setValue, inheritLabe
       </Field>
       {includeRateAndHdr && (
         <>
-          <Field label="Bitrate (kbps)" description="Blank inherits. PyroWave's calibrated wire budget is handled by Nonary's client and Vibepollo." childrenContainerWidth="fixed">
-            <NumericTextInput min={500} max={500000} integer={true} optional={true} value={value.bitrate} setValue={(bitrate) => setValue({ ...value, bitrate })} setIsValid={(valid) => { setRateValid(valid); onValidityChange?.(valid && fpsValid); }} />
+          <Field label="Bitrate (kbps)" description="Blank inherits. 1000000 kbps = 1 Gbps; maximum 3000000 kbps. For PyroWave, use the bitrate from Moonlight's calibration for this link." childrenContainerWidth="fixed">
+            <NumericTextInput min={500} max={maxBitrate} integer={true} optional={true} value={value.bitrate} setValue={(bitrate) => setValue({ ...value, bitrate })} setIsValid={(valid) => { setRateValid(valid); onValidityChange?.(valid && fpsValid); }} />
           </Field>
           <Field label="FPS" description="Blank inherits; this is the stream frame rate target." childrenContainerWidth="fixed">
             <NumericTextInput min={10} max={480} integer={true} optional={true} value={value.fps} setValue={(fps) => setValue({ ...value, fps })} setIsValid={(valid) => { setFpsValid(valid); onValidityChange?.(valid && rateValid); }} />
